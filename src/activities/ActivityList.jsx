@@ -1,8 +1,25 @@
-import { useAuth } from "../auth/AuthContext";
+import { Link } from "react-router-dom";
 import useQuery from "../api/useQuery";
-import useMutation from "../api/useMutation";
 
-/** Shows a list of activities. */
+/** Format to Title Case */
+function toTitleCase(str) {
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+  );
+}
+
+/** Capitalize first letter and ensure period */
+function formatDescription(desc) {
+  if (!desc) return "";
+  const d = desc.trim();
+  if (d.length === 0) return "";
+  let first = d.charAt(0).toUpperCase() + d.slice(1);
+  if (!/[.!?]$/.test(first)) first += ".";
+  return first;
+}
+
+/** Shows a list of activities, each links to details page */
 export default function ActivityList() {
   const {
     data: activities,
@@ -16,29 +33,20 @@ export default function ActivityList() {
   return (
     <ul>
       {activities.map((activity) => (
-        <ActivityListItem key={activity.id} activity={activity} />
+        <li key={activity.id}>
+          <Link
+            className="activity-list-link"
+            to={`/activities/${activity.id}`}
+          >
+            {toTitleCase(activity.name)}
+          </Link>
+          <div
+            style={{ color: "#374151", fontSize: "1rem", marginTop: "0.2rem" }}
+          >
+            {formatDescription(activity.description)}
+          </div>
+        </li>
       ))}
     </ul>
-  );
-}
-
-/** Shows a single activity. Logged-in users will also see a delete button. */
-function ActivityListItem({ activity }) {
-  const { token } = useAuth();
-  const {
-    mutate: deleteActivity,
-    loading,
-    error,
-  } = useMutation("DELETE", "/activities/" + activity.id, ["activities"]);
-
-  return (
-    <li>
-      <p>{activity.name}</p>
-      {token && (
-        <button onClick={() => deleteActivity()}>
-          {loading ? "Deleting" : error ? error : "Delete"}
-        </button>
-      )}
-    </li>
   );
 }
